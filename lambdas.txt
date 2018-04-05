@@ -1,0 +1,94 @@
+package com.company;
+
+public class Lambda {
+	static int functionCompostion(ZFn F, ZFn G, int a){
+		return F.x(G.x(a)); 
+	}
+	
+    static ZFn FoG(ZFn F, ZFn G){
+		return (number) -> F.x((G.x(number))); 
+	}
+    static ZFn repeat(ZFn F, int n){
+    	
+    	return /* creates the lambda(generates the function), just returns this body */ (number) -> {
+    		for(int i =1; i<=n; i++){
+    			number = F.x(number); 
+    		}		
+    		return /* actually does the computation once it gets called*/number;
+    	}; 
+    }
+    static ZFn repeatRecursive(ZFn F, int n){
+    	return (number) -> {
+    		if(n <= 0){
+    			return number; 
+    		}
+    		return F.x(repeatRecursive(F,n-1).x(number));  
+    		//KEY: F(1) = F(0) + number; so the numbers build on each other 
+    	};
+    }
+    static String limit(RFn F, double xInitial, double xLimit, int steps){
+    	double increment = (xLimit-xInitial)/steps; 
+    	StringBuilder res = new StringBuilder(); 
+    	res.append(F.x(xInitial)+ ", "); 
+    	while(steps>=0){
+    		xInitial+=increment; 
+    		res.append(F.x(xInitial)+", "); 
+    		steps--; 
+    	}
+    	return res.toString(); 	
+    } 
+    static double limit(RFn F, double xInitial, double xLimit, double delta){
+    	while(Math.abs(F.x(xInitial) - (F.x((xLimit+xInitial)/2)))>delta){
+    		xInitial = (xLimit+xInitial)/2; 
+    	}
+    	return Math.round(F.x(xInitial)*1000)/1000.000;
+    }
+    static double derivative(RFn F, double x, double precision){
+    	 double difference = 0.5; 
+    	 while(Math.abs(AROC(F, x+(2*difference), x-(2*difference)) - AROC(F, x+difference, x-difference))>precision){
+    		 difference/=2;
+    	 }
+    	 return Math.round(AROC(F, x+difference, x-difference)*1000)/1000.000; 
+    }
+    
+    static double AROC(RFn F, double a, double b){
+    	return (F.x(a) - F.x(b))/(a-b); 
+    }
+    static double integral(RFn F, double xInitial, double xTerminal, double precision){
+    	double runningArea = 0;  
+    	//precision is equal to the width of the rectangle, height is f(xInital) 
+    	while(xInitial<=xTerminal){
+    		runningArea+=Math.abs(F.x(xInitial))*precision; 
+    		xInitial+=precision; 
+    	}
+    	return Math.round(runningArea*1000)/1000.000; 
+    }
+
+	public static void main(String[] args){
+		
+		ZFn G = (x) -> 2*x; 
+		ZFn F = (x) -> 3*x; 
+		ZFn comp = FoG(F, G); 
+		ZFn doubler = (x)->2*x; 
+		System.out.println(repeatRecursive(G,3).x(1));
+		ZFn2 subtract = (a,b) -> a-b; 
+		ZFn linearFunction = (x) -> 3*x-2; 
+		RFn test = (x) -> 3*Math.pow((x), 3) + 2*Math.pow((x), 2) + 7*x; 
+		System.out.println(limit(test, 4, 12, 0.0005));
+		RFn integral = (x) -> Math.pow((x-3), 2) - 4; 
+		System.out.println(integral(integral, 1, 5, 0.0005));
+	}
+	//ZFn is the actual function like 3x-2, lambdas are the set of instructions to create any ZFn 
+	interface ZFn {
+		int x(int x); 
+	}
+	interface ZFn2 {
+		int x(int a, int b); 
+	}
+	interface RFn {
+		double x(double x); 
+	}
+	interface RFn2 {
+		double x(double a, double b); 
+	}
+}
